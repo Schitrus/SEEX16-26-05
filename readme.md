@@ -15,4 +15,4 @@ Analysen och beräkning sker med Python (3.14.2) och följande Python-bibliotek 
 - Pandas 3.0.0
 - Astropy 7.2.0
 
-Detta är fel.
+Även IPykernal behöver laddas ner
