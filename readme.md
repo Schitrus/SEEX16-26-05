@@ -14,3 +14,5 @@ Analysen och beräkning sker med Python (3.14.2) och följande Python-bibliotek 
 - Matplotlib 3.10
 - Pandas 3.0.0
 - Astropy 7.2.0
+
+Även IPykernal behöver laddas ner
