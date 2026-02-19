@@ -1,0 +1,29 @@
+
+The two files are two different input files for the AGB star U Her (uhertot.pos) and the pulsar B1508+55 (B1508+55.pos).
+
+-the .pos file
+
+On the first line a reference positions is given. This is a position of one of the middle observing epochs (ot the average position). Use the same units as the rest of the file.  
+
+From the second line onwards the format is:
+
+For B1508+55.pos: 
+
+1st colummn Modified Julian Date (MJD) at 0.25 accuracy. 
+The 2nd and 4th column are the RA and Dec position in seconds (RA) and arcseconds (Dec).
+The 3rd and 5th column are the RA and Dec errors (in milliarcseconds).
+
+(The fits are presented in: https://ui.adsabs.harvard.edu/abs/2005ApJ...630L..61C/abstract)
+
+For uhertot.pos:
+
+1st colummn Modified Julian Date (MJD) at 0.25 accuracy. 
+The 2nd and 4th column are the RA and Dec position in degrees.
+The 3rd and 5th column are the RA and Dec errors also in degrees.
+The 6th column when present is not used so should be 0.0.
+
+(These should be the ones used in: https://ui.adsabs.harvard.edu/abs/2007A%26A...472..547V/abstract)
+
+
+
+ 
