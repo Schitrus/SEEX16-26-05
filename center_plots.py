@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from utilities import raFormatter, decFormatter
 from center_methods import getCenters
-from astro_data_format import toAstroDataFile
+from astro_data_format import toAstroData
 
 # Plottar varje graf från centrum och formatterar axlar
 def plotter(ax, centers, color, label):
@@ -38,12 +38,12 @@ def plotMethods(method1, method1_str, method2, method2_str, R_Dor, R_Leo, W_Hya)
     W_Hya_center2 = getCenters(method2, W_Hya)
 
     # Spara data:
-    toAstroDataFile(fname = "R_Dor_1.astrom.dat", header=f"name = R Dorados - {method1_str}", data=R_Dor_center1)
-    toAstroDataFile(fname = "R_Dor_2.astrom.dat", header=f"name = R Dorados - {method2_str}", data=R_Dor_center2)
-    toAstroDataFile(fname = "R_Leo_1.astrom.dat", header=f"name = R Leonis - {method1_str}", data=R_Leo_center1)
-    toAstroDataFile(fname = "R_Leo_2.astrom.dat", header=f"name = R Leonis - {method2_str}", data=R_Leo_center2)
-    toAstroDataFile(fname = "W_Hya_1.astrom.dat", header=f"name = W Hydrae - {method1_str}", data=W_Hya_center1)
-    toAstroDataFile(fname = "W_Hya_2.astrom.dat", header=f"name = W Hydrae - {method2_str}", data=W_Hya_center2)
+    toAstroData(fname = "R_Dor_1.astrom.dat", header=f"name = R Dorados - {method1_str}", data=R_Dor_center1)
+    toAstroData(fname = "R_Dor_2.astrom.dat", header=f"name = R Dorados - {method2_str}", data=R_Dor_center2)
+    toAstroData(fname = "R_Leo_1.astrom.dat", header=f"name = R Leonis - {method1_str}", data=R_Leo_center1)
+    toAstroData(fname = "R_Leo_2.astrom.dat", header=f"name = R Leonis - {method2_str}", data=R_Leo_center2)
+    toAstroData(fname = "W_Hya_1.astrom.dat", header=f"name = W Hydrae - {method1_str}", data=W_Hya_center1)
+    toAstroData(fname = "W_Hya_2.astrom.dat", header=f"name = W Hydrae - {method2_str}", data=W_Hya_center2)
 
     print("Star plot", "\n=============================")
     # Skapa figur för att plotta de olika fallen

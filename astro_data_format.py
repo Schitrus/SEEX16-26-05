@@ -2,21 +2,31 @@ import numpy as np
 
 from datetime import datetime
 
-from utilities import raFormatter, decFormatter
+import astropy as aspy
 
+from utilities import raFormatter, decFormatter, raDeformatter, decDeformatter
 
-
-def toAstroDataFile(fname, header, data):
+def toAstroData(fname, header, data):
     formatted_data = []
     for data_point in data.T:
-        date = data_point[0]
-        start = datetime(date.year, 1, 1)
-        delta = date - start
-        frac_year = date.year + delta.days / (366 if (start.year % 4 == 0) else 365)
+        date = aspy.time.Time(data_point[0])
+        decimal_year = date.decimalyear
+        
         ra = data_point[1]
         dec = data_point[2]
         ra_error = 0.00035 # Dummy value for now
         dec_error = 0.0025 # Dummy value for now
-        formatted_data.append((f"{frac_year:.3f}", raFormatter(ra, 0), f"{ra_error:.5f}", decFormatter(dec, 0), f"{dec_error:.5f}"))
+        formatted_data.append((f"{decimal_year:.3f}", raFormatter(ra, 0), f"{ra_error:.5f}", decFormatter(dec, 0), f"{dec_error:.5f}"))
 
     np.savetxt(fname=fname, header="date  RA  RA_error  Dec Dec_error", comments=header + "\n\n# ", X=formatted_data, fmt='%s', delimiter="  ")
+
+def fromAstroData(fname):
+    formatter = {0 : lambda ts: aspy.time.Time(float(ts), format='decimalyear'), 
+                 1: lambda ras: raDeformatter(ras), 
+                 2: lambda ra_errors: 15*float(ra_errors),
+                 3: lambda decs: decDeformatter(decs),
+                 4: lambda dec_errors: float(dec_errors)}
+    data = np.loadtxt(fname=fname, skiprows= 3, unpack=True, converters=formatter, 
+                                                     dtype=[("time", aspy.time.Time), ("ras",float), ("ra_errs", float), ("decs", float), ("dec_errs", float)])
+    ts, ras, ra_errors, decs, dec_errors = data
+    return ts, ras, decs
