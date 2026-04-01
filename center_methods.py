@@ -206,7 +206,7 @@ def moffat(ras, decs, intensities, debug=False):
     stddev_factor = 12/(360*60*60)
     #modell moffat
     moffat_init = models.Moffat2D(amplitude=1, x_0=ra_max, y_0=dec_max,
-                                   gamma=stddev_factor*2, alpha=3)
+                                   gamma=stddev_factor*2, alpha=2)
     #Samma fitter som fungerade bra för gauss
     moffat_fitter = fitting.DogBoxLSQFitter()
 
