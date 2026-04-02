@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from utilities import raFormatter, decFormatter
 from center_methods import getCenters
-from astro_data_format import toAstroData
+from astro_data_format import toAstroData, fromAstroData
 
 # Plottar varje graf från centrum och formatterar axlar
 def plotter(ax, centers, color, label):
@@ -69,3 +69,46 @@ def plotMethods(method1, method1_str, method2, method2_str, R_Dor, R_Leo, W_Hya)
     axs[1,1].set_axis_off()
 
     return R_Dor_center1, R_Dor_center2, R_Leo_center1, R_Leo_center2, W_Hya_center1, W_Hya_center2
+
+
+# Det behövs färger om man ska plotta flera metoder
+färger=["cornflowerblue", "crimson","forestgreen","deepskyblue","indianred","lawngreen", "aqua", "aquamarine", "black", "blueviolet", "chartreuse", "cyan" "darkgreen", "darkmagenta", "darksalmon", "deeppink", "goldenrod","hotpink", "indigo" , "lime", "olive", "seagreen"]
+metoder={"maxIntensitet": ["R_Dor_MaxInt.astrom.dat","R_Leo_MaxInt.astrom.dat","W_Hya_MaxInt.astrom.dat"],
+         "gaussIntensitet":["R_Dor_Gauss.astrom.dat","R_Leo_Gauss.astrom.dat","W_Hya_Gauss.astrom.dat",],
+         "halvaMax":["R_Dor_HalfMax.astrom.dat","R_Leo_HalfMax.astrom.dat","W_Hya_HalfMax.astrom.dat"],
+         "halvaViktad":["R_Dor_HalfViktad.astrom.dat","R_Leo_HalfViktad.astrom.dat","W_Hya_HalfViktad.astrom.dat"],
+         "halvaLSQ":["R_Dor_HalfLSQ.astrom.dat","R_Leo_HalfLSQ.astrom.dat","W_Hya_HalfLSQ.astrom.dat"],
+         "moffat":["R_Dor_Moffat.astrom.dat","R_Leo_Moffat.astrom.dat","W_Hya_Moffat.astrom.dat"]
+}
+def plotMethods2(method):
+    # Skapa listor
+    R_Dor_center=[]
+    R_Leo_center=[]
+    W_Hya_center=[]
+    
+    for i in range(0, len(method)):
+        # Hämta data för specifika metoder för varje stjärna
+        R_Dor_center.append=fromAstroData(metoder.get(method[i])[0])
+        R_Leo_center.append=fromAstroData(metoder.get(method[i])[1])
+        W_Hya_center.append=fromAstroData(metoder.get(method[i])[2])
+        
+        print("Star plot", "\n=============================")
+        # Skapa figur för att plotta de olika fallen
+        fig, axs = plt.subplots(2, 2, figsize=(12, 12), dpi=120)
+
+        # Plotta alla centrum
+        axs[0,0].set_title("R Dorados")
+        axs[1,0].set_title("R Leonis")
+        axs[0,1].set_title("W Hydrae")
+
+        plotter(axs[0,0], R_Dor_center[i], färger[i], method)
+        plotter(axs[1,0], R_Leo_center[i], färger[i], method)
+        plotter(axs[0,1], W_Hya_center[i], färger[i], method)
+
+        axs[0,0].legend()
+        axs[1,0].legend()
+        axs[0,1].legend()
+
+        axs[1,1].set_axis_off()
+
+    return R_Dor_center,R_Leo_center, W_Hya_center
