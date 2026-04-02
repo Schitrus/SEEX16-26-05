@@ -21,12 +21,12 @@ def toAstroData(fname, header, data):
     np.savetxt(fname=fname, header="date  RA  RA_error  Dec Dec_error", comments=header + "\n\n# ", X=formatted_data, fmt='%s', delimiter="  ")
 
 def fromAstroData(fname):
-    formatter = {0 : lambda ts: aspy.time.Time(float(ts), format='decimalyear'), 
-                 1: lambda ras: aspy.coordinates.Angle(ras).degree, 
+    formatter = {0: lambda ts: aspy.time.Time(float(ts), format='decimalyear'), 
+                 1: lambda ras: aspy.coordinates.Angle(ras, unit=aspy.units.deg).degree,
                  2: lambda ra_errors: 15*float(ra_errors),
-                 3: lambda decs: aspy.coordinates.Angle(decs).degree,
+                 3: lambda decs: aspy.coordinates.Angle(decs, unit=aspy.units.deg).degree,
                  4: lambda dec_errors: float(dec_errors)}
-    data = np.loadtxt(fname=fname, skiprows= 3, unpack=True, converters=formatter, 
+    data = np.loadtxt(fname=fname, skiprows= 3, unpack=True, converters=formatter,encoding='latin1', 
                                                      dtype=[("time", aspy.time.Time), ("ras",float), ("ra_errs", float), ("decs", float), ("dec_errs", float)])
     ts, ras, ra_errors, decs, dec_errors = data
     return ts, ras, decs
