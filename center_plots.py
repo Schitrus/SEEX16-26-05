@@ -25,13 +25,13 @@ färger=["cornflowerblue", "crimson","forestgreen","deepskyblue","indianred","la
 #Lista alla metoder och korresponderande filnamn
 metoder={"maxIntensitet": ["R_Dor_MaxInt.astrom.dat","R_Leo_MaxInt.astrom.dat","W_Hya_MaxInt.astrom.dat"],
          "gaussIntensitet":["R_Dor_Gauss.astrom.dat","R_Leo_Gauss.astrom.dat","W_Hya_Gauss.astrom.dat",],
-         "halvaMax":["R_Dor_HalfMax.astrom.dat","R_Leo_HalfMax.astrom.dat","W_Hya_HalfMax.astrom.dat"],
-         "halvaViktad":["R_Dor_HalfViktad.astrom.dat","R_Leo_HalfViktad.astrom.dat","W_Hya_HalfViktad.astrom.dat"],
-         "halvaLSQ":["R_Dor_HalfLSQ.astrom.dat","R_Leo_HalfLSQ.astrom.dat","W_Hya_HalfLSQ.astrom.dat"],
+         "halfMax":["R_Dor_HalfMax.astrom.dat","R_Leo_HalfMax.astrom.dat","W_Hya_HalfMax.astrom.dat"],
+         "halfViktad":["R_Dor_HalfViktad.astrom.dat","R_Leo_HalfViktad.astrom.dat","W_Hya_HalfViktad.astrom.dat"],
+         "halfLSQ":["R_Dor_HalfLSQ.astrom.dat","R_Leo_HalfLSQ.astrom.dat","W_Hya_HalfLSQ.astrom.dat"],
          "moffat":["R_Dor_Moffat.astrom.dat","R_Leo_Moffat.astrom.dat","W_Hya_Moffat.astrom.dat"]
 }
 
-def plotMethods2(method):
+def plotMethods(method):
     # Skapa listor
     R_Dor_center=[]
     R_Leo_center=[]

@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # Få centerpunkter med metod och observationer
 # Ger tillbaka tidpunkter, ra:s och dec:s
-def getCenters(method, observations, debug=False):
+def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=False):
     ts = []
     ras = []
     decs = []
@@ -23,7 +23,10 @@ def getCenters(method, observations, debug=False):
         ts.append(observation[1])
         if debug:
             print("Band: ", observation[0], "Tidpunkt: ", observation[1])
-        ra, dec, intensitet = method(observation[2], observation[3], observation[4], debug=debug)
+        if halva:
+            ra, dec, intensitet = method(observation[2], observation[3], observation[4], lowLim, upLim, debug=debug)
+        else:
+            ra, dec, intensitet = method(observation[2], observation[3], observation[4], debug=debug)
 
         ras.append(ra)
         decs.append(dec)
@@ -110,10 +113,10 @@ def hittaIntensitet(ras, decs, intensities, lowLim, upLim):
     return delint, delras, deldec
 
 # Hitta centrum med halva max
-def halvaMax(ras, decs, intensities, debug=False):
+def halfMax(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
 
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
-    delint, delras, deldec=hittaIntensitet(ras, decs, intensities, 0.6, 1)
+    delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
     # Medelvärdera, kan testa andra sätt att interpolera ett centrum
     meanRas=np.mean(delras)
@@ -134,9 +137,9 @@ def halvaMax(ras, decs, intensities, debug=False):
     return meanRas, meanDec, meanint
 
 # Hitta centrum med halva max viktad med intensiteter
-def halvaViktad(ras, decs, intensities, debug=False):
+def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
-    delint, delras, deldec=hittaIntensitet(ras, decs, intensities, 0.6, 1)
+    delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
     #medelvärdera med intensiteter som vikt
     meanRas=np.average(delras,weights=delint)
@@ -159,13 +162,16 @@ def halvaViktad(ras, decs, intensities, debug=False):
     return meanRas, meanDec, meanint
 
 
-# Hitta centrum med halva max LSQ
-def halvaLSQ(ras, decs, intensities, debug=False):
+# Hitta centrum med halva max LSQ, 
+#R_Dor bäst vid 0.4-0.6
+#R_Leo bäst vid 0.7-0.8
+#W Hya bäst vid 0.5-0.7
+def halfLSQ(ras, decs, intensities, lowLim=0.4, upLim=0.6, debug=False):
     #skaffa maxintensitet
     ra_max, dec_max, int_max= maxIntensitet(ras, decs, intensities, debug=False)
 
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
-    delint, delras, deldec=hittaIntensitet(ras, decs, intensities, 0.6, 1)
+    delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
     #Använd maxintensiteten som utgångspunkt 
     x_0=[ra_max,dec_max]
