@@ -21,7 +21,7 @@ def plotter(ax, centers, color, label):
     ax.yaxis.set_major_formatter(tick.FuncFormatter(decFormatter))
 
 # Det behövs färger om man ska plotta flera metoder
-färger=["cornflowerblue", "crimson","forestgreen","deepskyblue","indianred","lawngreen", "aqua", "aquamarine", "black", "blueviolet", "chartreuse", "cyan" "darkgreen", "darkmagenta", "darksalmon", "deeppink", "goldenrod","hotpink", "indigo" , "lime", "olive", "seagreen"]
+färger=["cornflowerblue", "crimson","forestgreen","deepskyblue","indianred","lawngreen", "aqua", "aquamarine", "black", "blueviolet", "chartreuse", "cyan", "darkgreen", "darkmagenta", "darksalmon", "deeppink", "goldenrod","hotpink", "indigo" , "lime", "olive", "seagreen"]
 #Lista alla metoder och korresponderande filnamn
 metoder={"maxIntensitet": ["R_Dor_MaxInt.astrom.dat","R_Leo_MaxInt.astrom.dat","W_Hya_MaxInt.astrom.dat"],
          "gaussIntensitet":["R_Dor_Gauss.astrom.dat","R_Leo_Gauss.astrom.dat","W_Hya_Gauss.astrom.dat",],

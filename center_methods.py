@@ -17,6 +17,8 @@ def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=Fal
     ts = []
     ras = []
     decs = []
+    ras_err = []
+    decs_err = []
 
     # Gå igenom varje observaton
     for observation in observations:
@@ -24,12 +26,14 @@ def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=Fal
         if debug:
             print("Band: ", observation[0], "Tidpunkt: ", observation[1])
         if halva:
-            ra, dec, intensitet = method(observation[2], observation[3], observation[4], lowLim, upLim, debug=debug)
+            ra, dec, intensitet, sigma_ra, sigma_dec = method(observation[2], observation[3], observation[4], lowLim, upLim, debug=debug)
         else:
-            ra, dec, intensitet = method(observation[2], observation[3], observation[4], debug=debug)
+            ra, dec, intensitet, sigma_ra, sigma_dec = method(observation[2], observation[3], observation[4], debug=debug)
 
         ras.append(ra)
         decs.append(dec)
+        ras_err.append(sigma_ra)
+        decs_err.append(sigma_dec)
 
     # Sortera datan enligt observationstid
     idx = np.argsort(ts)
@@ -37,8 +41,9 @@ def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=Fal
     ts = np.array(ts)[idx]
     ras = np.array(ras)[idx]
     decs = np.array(decs)[idx]
-    data = np.array([ts, ras, decs])
-
+    ras_err = np.array(ras_err)[idx]
+    decs_err = np.array(decs_err)[idx]
+    data = np.array([ts, ras, decs, ras_err, decs_err])
 
     return data
 
@@ -69,10 +74,21 @@ def gaussIntensitet(ras, decs, intensities, debug=False):
                                    x_stddev=stddev_factor, y_stddev=stddev_factor)
     
     # Anpassningsmetoden som fungerade bäst. TODO: Undersök varför och om det finns bättre anpassare.
-    gauss_fitter = fitting.DogBoxLSQFitter()
+    gauss_fitter = fitting.LevMarLSQFitter()
 
     # Gör gaussisk anpassning med en maximal iteration på 10'000, (lägre gav sämre resultat)
     gauss_model = gauss_fitter(gauss_init, r, d, intensities, maxiter=10000) 
+
+    # Extrahera fel från metod
+    residuals = intensities - gauss_model(r, d)
+    N = intensities.size
+    p = len(gauss_model.parameters)
+
+    sigma2 = np.sum(residuals**2) / (N - p)
+    cov = gauss_fitter.fit_info['param_cov']
+    cov = cov * sigma2
+    sigma_ra = np.sqrt(cov[1, 1])
+    sigma_dec = np.sqrt(cov[2, 2]) 
 
     # För debug så plottas den initiala gauss modellen, den gaussiska anpassningen och ursprungliga stjärnbilden bredvid varandra.
     if debug:
@@ -89,7 +105,7 @@ def gaussIntensitet(ras, decs, intensities, debug=False):
         axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
 
-    return gauss_model.x_mean.value, gauss_model.y_mean.value, gauss_model.amplitude.value
+    return gauss_model.x_mean.value, gauss_model.y_mean.value, gauss_model.amplitude.value, sigma_ra, sigma_dec
 
 #Hittar ras och dec för ett intensitetsintervall
 def hittaIntensitet(ras, decs, intensities, lowLim, upLim):
@@ -123,6 +139,10 @@ def halfMax(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
     meanDec=np.mean(deldec)
     meanint=np.mean(delint)
 
+    # Extrahera osäkerheter
+    sigma_ra = np.std(delras, ddof = 1)/np.sqrt(len(delras))
+    sigma_dec = np.std(deldec, ddof = 1)/np.sqrt(len(deldec))
+
     # Om man vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 2, figsize=(12, 4), dpi=120)
@@ -134,7 +154,7 @@ def halfMax(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
         axs[1].pcolormesh(ras, decs, intensities)
         axs[1].plot(delras, deldec, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
-    return meanRas, meanDec, meanint
+    return meanRas, meanDec, meanint, sigma_ra, sigma_dec
 
 # Hitta centrum med halva max viktad med intensiteter
 def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
@@ -146,6 +166,12 @@ def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
     meanDec=np.average(deldec, weights=delint)
     meanint=np.average(delint)
 
+    #xtrahera osäkerheter
+    w = np.array(delint)
+    w_sum = np.sum(w)
+
+    sigma_ra = np.sqrt(np.sum(w * (delras - meanRas)**2)) / w_sum
+    sigma_dec = np.sqrt(np.sum(w * (deldec - meanDec)**2)) / w_sum
     # Om man vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 2, figsize=(12, 4), dpi=120)
@@ -159,7 +185,7 @@ def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
         plt.show()
         
 
-    return meanRas, meanDec, meanint
+    return meanRas, meanDec, meanint, sigma_ra, sigma_dec
 
 
 # Hitta centrum med halva max LSQ, 
@@ -187,6 +213,9 @@ def halfLSQ(ras, decs, intensities, lowLim=0.4, upLim=0.6, debug=False):
     meanint=np.average(delint)
     lsqRas=x_1.get("x")[0]
     lsqDec=x_1.get("x")[1]
+
+    sigma_ra = np.std(delras, ddof = 1)/np.sqrt(len(delras))
+    sigma_dec = np.std(deldec, ddof = 1)/np.sqrt(len(deldec))
     # Om man vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 2, figsize=(12, 4), dpi=120)
@@ -200,7 +229,7 @@ def halfLSQ(ras, decs, intensities, lowLim=0.4, upLim=0.6, debug=False):
         plt.show()
         
 
-    return lsqRas, lsqDec, meanint
+    return lsqRas, lsqDec, meanint, sigma_ra, sigma_dec
 
 
 # Hitta centrum med moffat anpassning 
@@ -214,9 +243,20 @@ def moffat(ras, decs, intensities, debug=False):
     moffat_init = models.Moffat2D(amplitude=1, x_0=ra_max, y_0=dec_max,
                                    gamma=stddev_factor*2, alpha=2)
     #Samma fitter som fungerade bra för gauss
-    moffat_fitter = fitting.DogBoxLSQFitter()
+    moffat_fitter = fitting.LevMarLSQFitter()
 
-    moffat_model = moffat_fitter(moffat_init, r, d, intensities, maxiter=1000) 
+    moffat_model = moffat_fitter(moffat_init, r, d, intensities, maxiter=1000)
+
+    # Extrahera fel
+    residuals = intensities - moffat_model(r, d)
+    N = intensities.size
+    p = len(moffat_model.parameters)
+
+    sigma2 = np.sum(residuals**2) / (N - p)
+    cov = moffat_fitter.fit_info['param_cov']
+    cov = cov * sigma2
+    sigma_ra = np.sqrt(cov[1, 1])
+    sigma_dec = np.sqrt(cov[2, 2])  
     #om du vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=120)
@@ -232,5 +272,45 @@ def moffat(ras, decs, intensities, debug=False):
         axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
     
-    return moffat_model.x_0.value, moffat_model.y_0.value, moffat_model.amplitude.value
+    return moffat_model.x_0.value, moffat_model.y_0.value, moffat_model.amplitude.value, sigma_ra, sigma_dec
+
+
+# Något knäppt med denna, helt wack just nu
+def IntIntegrering(ras, decs, intensities, debug=False):
+    r, d = np.meshgrid(ras, decs)
+
+    #Filtrera bort bakgrundsbrus genom att endast ta ett litet område runt den ljusaste punkten
+    iy, ix = np.unravel_index(np.argmax(intensities), intensities.shape)
+
+    box = 10
+
+    sub = intensities[iy-box:iy+box+1, ix-box:ix+box+1]
+
+    d_sub = decs[iy-box:iy+box+1]
+    r_sub = ras[ix-box:ix+box+1]
+
+    r_grid, d_grid = np.meshgrid(r_sub, d_sub)
+    # Beräkna tyngdpunkten av intensiteterna
+    weights = sub
+    I_sum = np.sum(weights)
+    x_iwc = np.sum(r_grid*weights) / I_sum
+    y_iwc = np.sum(d_grid*weights) / I_sum
+
+    # Beräkna osäkerheter
+    sigma_ra = np.sqrt(np.sum(weights * (r_grid - x_iwc)**2) / I_sum)
+    sigma_dec = np.sqrt(np.sum(weights * (d_grid - y_iwc)**2) / I_sum)
+    N_eff = (I_sum**2) / np.sum(weights**2)
+    sigma_ra /= np.sqrt(N_eff)
+    sigma_dec /= np.sqrt(N_eff)
+
+    # debug plots
+    if debug:
+        fig, axs = plt.subplots(figsize=(12, 4), dpi=120)
+        fig.suptitle("")
+        plt.title("Intensitetsintegrering centrum")
+        plt.pcolormesh(ras, decs, intensities)
+        plt.errorbar(x_iwc, y_iwc, xerr=sigma_ra, yerr=sigma_dec, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        print(sigma_ra, sigma_dec)
+        plt.show()
+    return x_iwc, y_iwc, intensities, sigma_ra, sigma_dec
 

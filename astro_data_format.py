@@ -14,19 +14,23 @@ def toAstroData(fname, header, data):
         
         ra = aspy.coordinates.Angle(data_point[1]*aspy.units.degree).to_string(precision=16)
         dec = aspy.coordinates.Angle(data_point[2]*aspy.units.degree).to_string(precision=16)
-        ra_error = 0.00035 # Dummy value for now
-        dec_error = 0.0025 # Dummy value for now
-        formatted_data.append((f"{decimal_year:.3f}", ra, f"{ra_error:.5f}", dec, f"{dec_error:.5f}"))
+        ra_error = aspy.coordinates.Angle(data_point[3]*aspy.units.degree).to_string(precision=16)
+        dec_error = aspy.coordinates.Angle(data_point[4]*aspy.units.degree).to_string(precision=16)
+        formatted_data.append((f"{decimal_year:.3f}", ra, ra_error, dec, dec_error))
 
     np.savetxt(fname=fname, header="date  RA  RA_error  Dec Dec_error", comments=header + "\n\n# ", X=formatted_data, fmt='%s', delimiter="  ")
 
 def fromAstroData(fname):
+    with open(fname, "r") as f:
+        first_line = f.readline().strip()
+
+    name = first_line.split("=", 1)[1].strip()
     formatter = {0: lambda ts: aspy.time.Time(float(ts), format='decimalyear'), 
                  1: lambda ras: aspy.coordinates.Angle(ras, unit=aspy.units.deg).degree,
-                 2: lambda ra_errors: 15*float(ra_errors),
+                 2: lambda ra_errors: aspy.coordinates.Angle(ra_errors).degree,
                  3: lambda decs: aspy.coordinates.Angle(decs, unit=aspy.units.deg).degree,
-                 4: lambda dec_errors: float(dec_errors)}
+                 4: lambda dec_errors: aspy.coordinates.Angle(dec_errors).degree}
     data = np.loadtxt(fname=fname, skiprows= 3, unpack=True, converters=formatter,encoding='latin1', 
                                                      dtype=[("time", aspy.time.Time), ("ras",float), ("ra_errs", float), ("decs", float), ("dec_errs", float)])
     ts, ras, ra_errors, decs, dec_errors = data
-    return ts, ras, decs
+    return name, ts, ras, decs, ra_errors, dec_errors
