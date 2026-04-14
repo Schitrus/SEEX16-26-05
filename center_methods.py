@@ -234,3 +234,37 @@ def moffat(ras, decs, intensities, debug=False):
     
     return moffat_model.x_0.value, moffat_model.y_0.value, moffat_model.amplitude.value
 
+
+# Hitta centrum med Lorentz2D anpassning
+def Lorentz(ras, decs, intensities, debug=False):
+    r, d = np.meshgrid(ras, decs)
+    #Utgår från maxintensitet
+    ra_max, dec_max, int_max = maxIntensitet(ras, decs, intensities)
+
+    #Lorentz2D model
+    Lorentz_init = models.Lorentz2D(amplitude=int_max, x_0=ra_max, y_0=dec_max, fwhm=12/(360*60*60))
+
+    Lorentz_fitter = fitting.DogBoxLSQFitter()
+
+    Lorentz_model = Lorentz_fitter(Lorentz_init, r, d, intensities, maxiter=1000)
+
+    #om du vill se figurer (Kopia av moffat)
+    if debug:
+        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120)
+        fig.suptitle("")
+        axs[0].set_title("Init")
+        axs[0].pcolormesh(ras, decs, Lorentz_init(r, d))
+        axs[0].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[1].set_title("Model")
+        axs[1].pcolormesh(ras, decs, Lorentz_model(r, d))
+        axs[1].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[2].set_title("Actual")
+        axs[2].pcolormesh(ras, decs, intensities)
+        axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[3].set_title("Residual")
+        axs[3].pcolormesh(ras, decs, Lorentz_model(r,d)- intensities )
+        axs[3].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        plt.show()
+
+    return Lorentz_model.x_0.value, Lorentz_model.y_0.value, Lorentz_model.amplitude.value 
+
