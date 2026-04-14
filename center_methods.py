@@ -57,14 +57,14 @@ def maxIntensitet(ras, decs, intensities, debug=False):
     # Hämta index för ljusaste intensitet
     j, i = np.unravel_index(np.argmax(intensities, axis=None), intensities.shape)
 
-    return ras[i], decs[j], intensities[j, i]
+    return ras[i], decs[j], intensities[j, i], np.abs(ras[0]-ras[1]), np.abs(decs[0]-decs[1])
 
 # Hitta centrum med gauss anpassning:
 def gaussIntensitet(ras, decs, intensities, debug=False):
     r, d = np.meshgrid(ras, decs)
 
     # Få ut maximala intensiteten som utgångspunkt för den gaussiansk anpassningen
-    ra_max, dec_max, int_max = maxIntensitet(ras, decs, intensities)
+    ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities)
 
     # Standard avvikelse satt till 12 arcsec, rimlig approximation av stjärnans radie
     stddev_factor = 12/(360*60*60)
@@ -111,7 +111,7 @@ def gaussIntensitet(ras, decs, intensities, debug=False):
 def hittaIntensitet(ras, decs, intensities, lowLim, upLim):
 
     #skaffa maxintensitet
-    ra_max, dec_max, int_max= maxIntensitet(ras, decs, intensities, debug=False)
+    ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities, debug=False)
 
     #skapa lite listor
     delint=[]
@@ -194,7 +194,7 @@ def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
 #W Hya bäst vid 0.5-0.7
 def halfLSQ(ras, decs, intensities, lowLim=0.4, upLim=0.6, debug=False):
     #skaffa maxintensitet
-    ra_max, dec_max, int_max= maxIntensitet(ras, decs, intensities, debug=False)
+    ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities, debug=False)
 
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
     delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
@@ -236,7 +236,7 @@ def halfLSQ(ras, decs, intensities, lowLim=0.4, upLim=0.6, debug=False):
 def moffat(ras, decs, intensities, debug=False):
     r, d = np.meshgrid(ras, decs)
     #utgå från maxintensitet
-    ra_max, dec_max, int_max = maxIntensitet(ras, decs, intensities)
+    ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities)
 
     stddev_factor = 12/(360*60*60)
     #modell moffat
@@ -319,7 +319,7 @@ def IntIntegrering(ras, decs, intensities, debug=False):
 def Lorentz(ras, decs, intensities, debug=False):
     r, d = np.meshgrid(ras, decs)
     #Utgår från maxintensitet
-    ra_max, dec_max, int_max = maxIntensitet(ras, decs, intensities)
+    ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities)
 
     #Lorentz2D model
     Lorentz_init = models.Lorentz2D(amplitude=int_max, x_0=ra_max, y_0=dec_max, fwhm=12/(360*60*60))
@@ -327,6 +327,17 @@ def Lorentz(ras, decs, intensities, debug=False):
     Lorentz_fitter = fitting.DogBoxLSQFitter()
 
     Lorentz_model = Lorentz_fitter(Lorentz_init, r, d, intensities, maxiter=1000)
+
+    # Extrahera fel
+    residuals = intensities - Lorentz_model(r, d)
+    N = intensities.size
+    p = len(Lorentz_model.parameters)
+
+    sigma2 = np.sum(residuals**2) / (N - p)
+    cov = Lorentz_fitter.fit_info['param_cov']
+    cov = cov * sigma2
+    sigma_ra = np.sqrt(cov[1, 1])
+    sigma_dec = np.sqrt(cov[2, 2])  
 
     #om du vill se figurer (Kopia av moffat)
     if debug:
@@ -346,5 +357,5 @@ def Lorentz(ras, decs, intensities, debug=False):
         axs[3].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
 
-    return Lorentz_model.x_0.value, Lorentz_model.y_0.value, Lorentz_model.amplitude.value 
+    return Lorentz_model.x_0.value, Lorentz_model.y_0.value, Lorentz_model.amplitude.value , sigma_ra, sigma_dec
 
