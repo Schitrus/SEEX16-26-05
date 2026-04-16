@@ -81,7 +81,7 @@ def fit_model(t, ref_t, ras, decs, initial, bounds, ras_err, decs_err):
     return result
 
 # Function for plotting
-def makeplots(name, result, t, ref_t, ras, decs, ras_err, decs_err, save = False):
+def makeplots(name, result, t, ref_t, ras, decs, ras_err, decs_err, save = False, datum=False):
 
     # Handle uncertainties
     ras_err = 3.6e6 * np.rad2deg(ras_err) * np.cos(decs)
@@ -162,7 +162,29 @@ def makeplots(name, result, t, ref_t, ras, decs, ras_err, decs_err, save = False
 
     ax21.plot(3.6e6*np.rad2deg(ra_mod_wopm-ra0), 3.6e6*np.rad2deg(dec_mod_wopm-dec0), color = 'cornflowerblue', linestyle=':')
     ax21.errorbar(3.6e6*np.rad2deg(ra_wopm-ra0), 3.6e6*np.rad2deg(dec_wopm-dec0), xerr=ras_err, yerr=decs_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.75)
+    if datum:
+        x1=3.6e6*np.rad2deg([dec_wopm-(dec_mod_elips)])
+        x2=3.6e6*np.rad2deg([ra_wopm-(ra_mod_elips)])
+        dist=np.sqrt(x1**2+x2**2)
+        dist0=np.argsort(dist)[:,len(dist[0,:])-1]
+        dist1=np.argsort(dist)[:,len(dist[0,:])-2]
+        
     for i in range(len(ra_wopm)):
+        if datum: 
+            if i==dist0 or i==dist1:
+                count=0
+                tid = aspy.time.Time(ref_t+t[i], format = 'decimalyear')
+                tid.format='fits'
+                ax21.text(3.6e6*np.rad2deg(ra_wopm[i]-ra0), 3.6e6*np.rad2deg(dec_wopm[i]-dec0), tid)
+                with open(r'banlist_prel.txt', 'r') as fp:
+                    lines = fp.readlines()
+                    for row in lines:
+                        word = f'{tid}'  # String to search for
+                        if row.find(word) != -1:
+                            count=count+1
+                    if count==0:
+                        with open("banlist_prel.txt", "a") as f:
+                            f.write(f"{tid} \n")
         ax21.plot(3.6e6*np.rad2deg([ra_wopm[i]-ra0, ra_mod_elips[i]-ra0]), 3.6e6*np.rad2deg([dec_wopm[i]-dec0, dec_mod_elips[i]-dec0]), color = 'crimson', alpha=0.25)
     ax21.axis('equal')
     ax21.set_title('Dec vs RA without proper motion')
