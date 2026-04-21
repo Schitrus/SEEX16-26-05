@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # Få centerpunkter med metod och observationer
 # Ger tillbaka tidpunkter, ra:s och dec:s
-def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=False):
+def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=False, user=False):
     ts = []
     ras = []
     decs = []
@@ -27,6 +27,8 @@ def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=Fal
             print("Band: ", observation[0], "Tidpunkt: ", observation[1])
         if halva:
             ra, dec, intensitet, sigma_ra, sigma_dec = method(observation[2], observation[3], observation[4], lowLim, upLim, debug=debug)
+        elif user:
+            ra, dec, sigma_ra, sigma_dec = observation[7], observation[8], observation[5], observation[6]
         else:
             ra, dec, intensitet, sigma_ra, sigma_dec = method(observation[2], observation[3], observation[4], debug=debug)
 
@@ -50,7 +52,6 @@ def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=Fal
 ######################
 # CENTER FUNCTIONS
 ######################
-
 
 # Hitta centrum med ljusaste punkt:
 def maxIntensitet(ras, decs, intensities, debug=False):
