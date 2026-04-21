@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # Få centerpunkter med metod och observationer
 # Ger tillbaka tidpunkter, ra:s och dec:s
-def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=False, user=False):
+def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=False, user=None):
     ts = []
     ras = []
     decs = []
@@ -28,7 +28,14 @@ def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=Fal
         if halva:
             ra, dec, intensitet, sigma_ra, sigma_dec = method(observation[2], observation[3], observation[4], lowLim, upLim, debug=debug)
         elif user:
-            ra, dec, sigma_ra, sigma_dec = observation[7], observation[8], observation[5], observation[6]
+            user_list = observation[5]
+            user_ras, user_decs, user_sigma_ras, user_sigma_decs = [], [], [], []
+            for idx in user:
+                user_ras.append(user_list[idx][2])
+                user_decs.append(user_list[idx][3])
+                user_sigma_ras.append(user_list[idx][0])
+                user_sigma_decs.append(user_list[idx][1])
+            ra, dec, sigma_ra, sigma_dec = np.mean(user_ras), np.mean(user_decs), np.mean(user_sigma_ras), np.mean(user_sigma_decs)
         else:
             ra, dec, intensitet, sigma_ra, sigma_dec = method(observation[2], observation[3], observation[4], debug=debug)
 
@@ -404,3 +411,48 @@ def RickerWavelet(ras, decs, intensities, debug=False):
         plt.show()
 
     return RickerWavelet_model.x_0.value, RickerWavelet_model.y_0.value, RickerWavelet_model.amplitude.value , sigma_ra, sigma_dec
+
+# Hitta centrum med TrapeziodDisk2D anpassning
+def TrapezoidDisk(ras, decs, intensities, debug=False):
+    r, d = np.meshgrid(ras, decs)
+    #Utgår från maxintensitet
+    ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities)
+
+    #TrapezoidDisk model
+    TrapezoidDisk_init = models.TrapezoidDisk2D(amplitude=int_max, x_0=ra_max, y_0=dec_max,
+                                                R_0=6/(360*60*60), slope=int_max/(12/(360*60*60)), bounds={'R_0': (0., None)})
+
+    TrapezoidDisk_fitter = fitting.DogBoxLSQFitter()
+
+    TrapezoidDisk_model = TrapezoidDisk_fitter(TrapezoidDisk_init, r, d, intensities, maxiter=100000)
+
+    # Extrahera fel
+    residuals = intensities - TrapezoidDisk_model(r, d)
+    N = intensities.size
+    p = len(TrapezoidDisk_model.parameters)
+
+    sigma2 = np.sum(residuals**2) / (N - p)
+    cov = TrapezoidDisk_fitter.fit_info['param_cov']
+    cov = cov * sigma2
+    sigma_ra = np.sqrt(cov[1, 1])
+    sigma_dec = np.sqrt(cov[2, 2])  
+
+    #om du vill se figurer (Kopia av moffat)
+    if debug:
+        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120)
+        fig.suptitle("")
+        axs[0].set_title("Init")
+        axs[0].pcolormesh(ras, decs, TrapezoidDisk_init(r, d))
+        axs[0].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[1].set_title("Model")
+        axs[1].pcolormesh(ras, decs, TrapezoidDisk_model(r, d))
+        axs[1].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[2].set_title("Actual")
+        axs[2].pcolormesh(ras, decs, intensities)
+        axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[3].set_title("Residual")
+        axs[3].pcolormesh(ras, decs, intensities - TrapezoidDisk_model(r,d))
+        axs[3].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        plt.show()
+
+    return TrapezoidDisk_model.x_0.value, TrapezoidDisk_model.y_0.value, TrapezoidDisk_model.amplitude.value , sigma_ra, sigma_dec
