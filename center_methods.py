@@ -360,3 +360,47 @@ def Lorentz(ras, decs, intensities, debug=False):
 
     return Lorentz_model.x_0.value, Lorentz_model.y_0.value, Lorentz_model.amplitude.value , sigma_ra, sigma_dec
 
+
+# Hitta centrum med RickerWavelet anpassning
+def RickerWavelet(ras, decs, intensities, debug=False):
+    r, d = np.meshgrid(ras, decs)
+    #Utgår från maxintensitet
+    ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities)
+
+    #RickerWavelet model
+    RickerWavelet_init = models.RickerWavelet2D(amplitude=int_max, x_0=ra_max, y_0=dec_max, sigma=12/(360*60*60))
+
+    RickerWavelet_fitter = fitting.DogBoxLSQFitter()
+
+    RickerWavelet_model = RickerWavelet_fitter(RickerWavelet_init, r, d, intensities, maxiter=1000)
+
+    # Extrahera fel
+    residuals = intensities - RickerWavelet_model(r, d)
+    N = intensities.size
+    p = len(RickerWavelet_model.parameters)
+
+    sigma2 = np.sum(residuals**2) / (N - p)
+    cov = RickerWavelet_fitter.fit_info['param_cov']
+    cov = cov * sigma2
+    sigma_ra = np.sqrt(cov[1, 1])
+    sigma_dec = np.sqrt(cov[2, 2])  
+
+    #om du vill se figurer (Kopia av moffat)
+    if debug:
+        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120)
+        fig.suptitle("")
+        axs[0].set_title("Init")
+        axs[0].pcolormesh(ras, decs, RickerWavelet_init(r, d))
+        axs[0].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[1].set_title("Model")
+        axs[1].pcolormesh(ras, decs, RickerWavelet_model(r, d))
+        axs[1].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[2].set_title("Actual")
+        axs[2].pcolormesh(ras, decs, intensities)
+        axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        axs[3].set_title("Residual")
+        axs[3].pcolormesh(ras, decs, intensities - RickerWavelet_model(r,d))
+        axs[3].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
+        plt.show()
+
+    return RickerWavelet_model.x_0.value, RickerWavelet_model.y_0.value, RickerWavelet_model.amplitude.value , sigma_ra, sigma_dec
