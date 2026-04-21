@@ -12,55 +12,65 @@ from os import listdir
 from os.path import isfile, join
 from datetime import datetime
 
+#läs banlist
+with open(r'banlist.txt', 'r') as fp:
+    lines = fp.readlines()
 
 # Returnerar lista av (band (int), tidpunkt (datetime), bild_data (np.ndarray av ra, dec, intensitet))
-def parseFits(fits_dir):
+def parseFits(fits_dir, banlist=False):
     # Hämta lista av fits filer från mapp
     fits_files = [fits_file for fits_file in listdir(fits_dir) if isfile(join(fits_dir, fits_file))]
-
     observations = list()
     date_format = "%Y-%m-%dT%H:%M:%S.%f"
-
     # Gå igenom varje fits fil
     for fits_file in fits_files:
-        # Öppna fitsfil
-        # HDUList (Header Data Unit)
-        hdul = fits.open(fits_dir + fits_file)
-        #hdul.info() # Printar lite info om fitsfilen
+        next=False
+        # Kolla om nuvarande fil är i banlist
+        for i in range(len(lines)):
+            if f"{fits_file}\n"==f"{lines[i]}":
+                next=True
+        # Om den är med så gå vidare till nästa
+        if banlist and next:
+            continue
+        # Annars fortsätt som vanligt
+        else:
+            # Öppna fitsfil
+            # HDUList (Header Data Unit)
+            hdul = fits.open(fits_dir + fits_file)
+            #hdul.info() # Printar lite info om fitsfilen
 
-        # Header information
-        # Se: http://www.alma.inaf.it/images/ArchiveKeyworkds.pdf
-        header = hdul[0].header
-        #print(repr(header))
+            # Header information
+            # Se: http://www.alma.inaf.it/images/ArchiveKeyworkds.pdf
+            header = hdul[0].header
+            #print(repr(header))
 
-        # Få band
-        band = int(fits_file[fits_file.find('B')+1])
+            # Få band
+            band = int(fits_file[fits_file.find('B')+1])
 
-        # Få observationsdatum och tid
-        date_str = header['DATE-OBS']
-        date = datetime.strptime(date_str, date_format)
+            # Få observationsdatum och tid
+            date_str = header['DATE-OBS']
+            date = datetime.strptime(date_str, date_format)
 
-        # Bilddatan
-        intensities = np.squeeze(hdul[0].data)
+            # Bilddatan
+            intensities = np.squeeze(hdul[0].data)
 
-        width, height = intensities.shape
-        x_pixels = np.linspace(0, width, width)
-        y_pixels = np.linspace(0, height, height)
+            width, height = intensities.shape
+            x_pixels = np.linspace(0, width, width)
+            y_pixels = np.linspace(0, height, height)
 
-        # Right ascension
-        ra_ref = header['CRVAL1'] # RA referens i relation till Pixel referensen
-        ra_delta = header['CDELT1'] # RA delta för varje pixel
-        ra_pixel_ref = header['CRPIX1'] # Pixel positionen där RA referens gäller
+            # Right ascension
+            ra_ref = header['CRVAL1'] # RA referens i relation till Pixel referensen
+            ra_delta = header['CDELT1'] # RA delta för varje pixel
+            ra_pixel_ref = header['CRPIX1'] # Pixel positionen där RA referens gäller
 
-        # Declination
-        dec_ref = header['CRVAL2']
-        dec_delta = header['CDELT2']
-        dec_pixel_ref = header['CRPIX2']
+            # Declination
+            dec_ref = header['CRVAL2']
+            dec_delta = header['CDELT2']
+            dec_pixel_ref = header['CRPIX2']
 
-        # Konvertera från pixel koordinater till ekvatoriella koordinater
-        ras = ra_ref + (x_pixels - ra_pixel_ref) * ra_delta
-        decs = dec_ref + (y_pixels - dec_pixel_ref) * dec_delta
+            # Konvertera från pixel koordinater till ekvatoriella koordinater
+            ras = ra_ref + (x_pixels - ra_pixel_ref) * ra_delta
+            decs = dec_ref + (y_pixels - dec_pixel_ref) * dec_delta
 
-        observations.append((band, date, ras, decs, intensities))
-
+            observations.append((band, date, ras, decs, intensities))
     return observations
