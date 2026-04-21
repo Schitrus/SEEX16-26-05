@@ -72,10 +72,10 @@ def gaussIntensitet(ras, decs, intensities, debug=False):
 
     # Initala gauss modellen: Startpunkt för anpassningen
     gauss_init = models.Gaussian2D(amplitude=1, x_mean=ra_max, y_mean=dec_max, \
-                                   x_stddev=stddev_factor, y_stddev=stddev_factor)
+                                   x_stddev=stddev_factor, y_stddev=stddev_factor, tied={'x_stddev': lambda model: model.y_stddev })
     
     # Anpassningsmetoden som fungerade bäst. TODO: Undersök varför och om det finns bättre anpassare.
-    gauss_fitter = fitting.LevMarLSQFitter()
+    gauss_fitter = fitting.DogBoxLSQFitter()
 
     # Gör gaussisk anpassning med en maximal iteration på 10'000, (lägre gav sämre resultat)
     gauss_model = gauss_fitter(gauss_init, r, d, intensities, maxiter=10000) 
