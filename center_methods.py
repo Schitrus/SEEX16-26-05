@@ -456,3 +456,29 @@ def TrapezoidDisk(ras, decs, intensities, debug=False):
         plt.show()
 
     return TrapezoidDisk_model.x_0.value, TrapezoidDisk_model.y_0.value, TrapezoidDisk_model.amplitude.value , sigma_ra, sigma_dec
+
+
+# Tar bort den ljusaste punkten med radie R_0
+def RemoveFirstMax(ras, decs, intensities, R_0 = 6*12/(360*60*60), debug=False):
+    r, d = np.meshgrid(ras, decs)
+
+    ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities)
+    r = np.sqrt((r - ra_max) ** 2 + (d - dec_max) ** 2)
+
+    range_1 = r <= R_0
+    range_2 = r > R_0
+    val_1 = 0
+    val_2 = intensities
+    result = np.select([range_1, range_2], [val_1, val_2])
+
+     #om du vill se figurer (Kopia av moffat)
+    if debug:
+        fig, axs = plt.subplots(1, 2, figsize=(8, 4), dpi=120)
+        fig.suptitle("")
+        axs[0].set_title("Removed first max")
+        axs[0].pcolormesh(ras, decs, result)
+        axs[1].set_title("Actual")
+        axs[1].pcolormesh(ras, decs, intensities)
+        plt.show()
+
+    return ra_max, dec_max, result
