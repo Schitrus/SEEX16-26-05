@@ -65,7 +65,6 @@ def model_subtract_pm(t, ras, decs, *params):
 
 # residuals to use with least square fitting
 def residuals(params, t, ref_t, ras, decs, ras_err, decs_err):
-    
     ra_model, dec_model = model(t, ref_t, *params)
     dec0 = params[1]
     residual_ra = (ras - ra_model) * np.cos(decs) / (ras_err)
