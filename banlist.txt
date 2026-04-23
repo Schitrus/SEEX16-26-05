@@ -3,4 +3,7 @@ R_Dor_B7_2023-10-06.fits
 RLeo_B7_2025_07_15.fits
 RLeo_B4_2023_10_01.fits
 WHya_B7_2025_08_05.fits
+Mira_ab_B7_2023-07-06.fits
+Mira_ab_B9_2023-06-26.fits
+Mira_ab_B9_2023-06-30.fits
 WHya hade inga riktigt dåliga så den här kan man nästan låta var kvar.

@@ -200,7 +200,7 @@ def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
 #R_Dor bäst vid 0.4-0.6
 #R_Leo bäst vid 0.7-0.8
 #W Hya bäst vid 0.5-0.7
-def halfLSQ(ras, decs, intensities, lowLim=0.4, upLim=0.6, debug=False):
+def halfLSQ(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
     #skaffa maxintensitet
     ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities, debug=False)
 
@@ -481,4 +481,32 @@ def RemoveFirstMax(ras, decs, intensities, R_0 = 6*12/(360*60*60), debug=False):
         axs[1].pcolormesh(ras, decs, intensities)
         plt.show()
 
-    return ra_max, dec_max, result
+    return ras, decs, result, _, _
+
+def RemoveFirstMax2(observations, R_0 = 6*12/(360*60*60), debug=False):
+    # Lista för den nya datan
+    removed = list()
+    # Kör igenom alla bilder
+    for observation in observations:
+        r, d = np.meshgrid(observation[2], observation[3])
+
+        ra_max, dec_max, int_max, _, _ = maxIntensitet(observation[2], observation[3], observation[4])
+        r = np.sqrt((r - ra_max) ** 2 + (d - dec_max) ** 2)
+        range_1 = r <= R_0
+        range_2 = r > R_0
+        val_1 = 0
+        val_2 = observation[4]
+        result = np.select([range_1, range_2], [val_1, val_2])
+        #om du vill se figurer (Kopia av moffat)
+        if debug:
+            fig, axs = plt.subplots(1, 2, figsize=(8, 4), dpi=120)
+            fig.suptitle("")
+            axs[0].set_title("Removed first max")
+            axs[0].pcolormesh(observation[2], observation[3], result)
+            axs[1].set_title("Actual")
+            axs[1].pcolormesh(observation[2], observation[3], observation[4])
+            plt.show()
+        # Skapa nu observation med Mira A borttagen, result istället för intensities
+        removed.append((observation[0], observation[1], observation[2], observation[3], result))
+
+    return removed
