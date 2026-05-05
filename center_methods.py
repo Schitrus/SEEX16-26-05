@@ -6,6 +6,7 @@ from astropy.modeling import models, fitting
 
 # Temporary
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 ##########################
 # MAIN Center function
@@ -27,6 +28,7 @@ def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=Fal
             print("Band: ", observation[0], "Tidpunkt: ", observation[1])
         if halva:
             ra, dec, intensitet, sigma_ra, sigma_dec = method(observation[2], observation[3], observation[4], lowLim, upLim, debug=debug)
+            
         elif user:
             user_list = observation[5]
             user_ras, user_decs, user_sigma_ras, user_sigma_decs = [], [], [], []
@@ -38,7 +40,6 @@ def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=Fal
             ra, dec, sigma_ra, sigma_dec = np.mean(user_ras), np.mean(user_decs), np.mean(user_sigma_ras), np.mean(user_sigma_decs)
         else:
             ra, dec, intensitet, sigma_ra, sigma_dec = method(observation[2], observation[3], observation[4], debug=debug)
-
         ras.append(ra)
         decs.append(dec)
         ras_err.append(sigma_ra)
@@ -100,15 +101,30 @@ def gaussIntensitet(ras, decs, intensities, debug=False):
 
     # För debug så plottas den initiala gauss modellen, den gaussiska anpassningen och ursprungliga stjärnbilden bredvid varandra.
     if debug:
-        fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=120)
+        fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Init")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, gauss_init(r, d))
         axs[0].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[1].set_title("Model")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, gauss_model(r, d))
         axs[1].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[2].set_title("Actual")
+        axs[2].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[2].set_xlabel("RA [DEG]")
+        axs[2].set_ylabel("Dec [DEG]")
+        axs[2].ticklabel_format(style='plain',useOffset=False)
+        axs[2].invert_xaxis()
         axs[2].pcolormesh(ras, decs, intensities)
         axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
@@ -137,8 +153,10 @@ def hittaIntensitet(ras, decs, intensities, lowLim, upLim):
     return delint, delras, deldec
 
 # Hitta centrum med halva max
+# R_Dor 0.6-1
+# R_Leo 0.6-
+# W_Hya 0.5-0.7
 def halfMax(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
-
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
     delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
@@ -153,19 +171,34 @@ def halfMax(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
 
     # Om man vill se figurer
     if debug:
-        fig, axs = plt.subplots(1, 2, figsize=(12, 4), dpi=120)
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Medelvärde")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=5))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, intensities)
         axs[0].plot(meanRas, meanDec, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[1].set_title("Intensitetsintervall")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=5))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, intensities)
         axs[1].plot(delras, deldec, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
     return meanRas, meanDec, meanint, sigma_ra, sigma_dec
 
+
+
 # Hitta centrum med halva max viktad med intensiteter
-def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
+#R_Dor 0.6-1
+#R_Leo 0.6-0.8
+#W_Hya 0.5-0.7
+def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=0.8, debug=False):
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
     delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
@@ -182,12 +215,22 @@ def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
     sigma_dec = np.sqrt(np.sum(w * (deldec - meanDec)**2)) / w_sum
     # Om man vill se figurer
     if debug:
-        fig, axs = plt.subplots(1, 2, figsize=(12, 4), dpi=120)
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Viktat medelvärde")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=5))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, intensities)
         axs[0].plot(meanRas, meanDec, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[1].set_title("Intensitetsintervall")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=5))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, intensities)
         axs[1].plot(delras, deldec, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
@@ -200,7 +243,7 @@ def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
 #R_Dor bäst vid 0.4-0.6
 #R_Leo bäst vid 0.7-0.8
 #W Hya bäst vid 0.5-0.7
-def halfLSQ(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
+def halfLSQ(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
     #skaffa maxintensitet
     ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities, debug=False)
 
@@ -226,12 +269,22 @@ def halfLSQ(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
     sigma_dec = np.std(deldec, ddof = 1)/np.sqrt(len(deldec))
     # Om man vill se figurer
     if debug:
-        fig, axs = plt.subplots(1, 2, figsize=(12, 4), dpi=120)
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Minsta kvadrat centrum")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=5))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, intensities)
         axs[0].plot(lsqRas, lsqDec, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[1].set_title("Intensitetsintervall")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=5))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, intensities)
         axs[1].plot(delras, deldec, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
@@ -267,15 +320,30 @@ def moffat(ras, decs, intensities, debug=False):
     sigma_dec = np.sqrt(cov[2, 2])  
     #om du vill se figurer
     if debug:
-        fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=120)
+        fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Init")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, moffat_init(r, d))
         axs[0].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[1].set_title("Model")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, moffat_model(r, d))
         axs[1].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[2].set_title("Actual")
+        axs[2].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[2].set_xlabel("RA [DEG]")
+        axs[2].set_ylabel("Dec [DEG]")
+        axs[2].ticklabel_format(style='plain',useOffset=False)
+        axs[2].invert_xaxis()
         axs[2].pcolormesh(ras, decs, intensities)
         axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
@@ -349,18 +417,38 @@ def Lorentz(ras, decs, intensities, debug=False):
 
     #om du vill se figurer (Kopia av moffat)
     if debug:
-        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120)
+        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Init")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, Lorentz_init(r, d))
         axs[0].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[1].set_title("Model")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, Lorentz_model(r, d))
         axs[1].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[2].set_title("Actual")
+        axs[2].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[2].set_xlabel("RA [DEG]")
+        axs[2].set_ylabel("Dec [DEG]")
+        axs[2].ticklabel_format(style='plain',useOffset=False)
+        axs[2].invert_xaxis()
         axs[2].pcolormesh(ras, decs, intensities)
         axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[3].set_title("Residual")
+        axs[3].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[3].set_xlabel("RA [DEG]")
+        axs[3].set_ylabel("Dec [DEG]")
+        axs[3].ticklabel_format(style='plain',useOffset=False)
+        axs[3].invert_xaxis()
         axs[3].pcolormesh(ras, decs, Lorentz_model(r,d)- intensities )
         axs[3].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
@@ -394,18 +482,38 @@ def RickerWavelet(ras, decs, intensities, debug=False):
 
     #om du vill se figurer (Kopia av moffat)
     if debug:
-        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120)
+        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Init")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, RickerWavelet_init(r, d))
         axs[0].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[1].set_title("Model")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, RickerWavelet_model(r, d))
         axs[1].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[2].set_title("Actual")
+        axs[2].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[2].set_xlabel("RA [DEG]")
+        axs[2].set_ylabel("Dec [DEG]")
+        axs[2].ticklabel_format(style='plain',useOffset=False)
+        axs[2].invert_xaxis()
         axs[2].pcolormesh(ras, decs, intensities)
         axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[3].set_title("Residual")
+        axs[3].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[3].set_xlabel("RA [DEG]")
+        axs[3].set_ylabel("Dec [DEG]")
+        axs[3].ticklabel_format(style='plain',useOffset=False)
+        axs[3].invert_xaxis()
         axs[3].pcolormesh(ras, decs, intensities - RickerWavelet_model(r,d))
         axs[3].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
@@ -439,18 +547,38 @@ def TrapezoidDisk(ras, decs, intensities, debug=False):
 
     #om du vill se figurer (Kopia av moffat)
     if debug:
-        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120)
+        fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Init")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, TrapezoidDisk_init(r, d))
         axs[0].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[1].set_title("Model")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, TrapezoidDisk_model(r, d))
         axs[1].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[2].set_title("Actual")
+        axs[2].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[2].set_xlabel("RA [DEG]")
+        axs[2].set_ylabel("Dec [DEG]")
+        axs[2].ticklabel_format(style='plain',useOffset=False)
+        axs[2].invert_xaxis()
         axs[2].pcolormesh(ras, decs, intensities)
         axs[2].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         axs[3].set_title("Residual")
+        axs[3].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[3].set_xlabel("RA [DEG]")
+        axs[3].set_ylabel("Dec [DEG]")
+        axs[3].ticklabel_format(style='plain',useOffset=False)
+        axs[3].invert_xaxis()
         axs[3].pcolormesh(ras, decs, intensities - TrapezoidDisk_model(r,d))
         axs[3].plot(ra_max, dec_max, marker='*', markerfacecolor="gold", markeredgecolor="darkorange", alpha=0.5, markersize=3.0)
         plt.show()
@@ -473,11 +601,21 @@ def RemoveFirstMax(ras, decs, intensities, R_0 = 6*12/(360*60*60), debug=False):
 
      #om du vill se figurer (Kopia av moffat)
     if debug:
-        fig, axs = plt.subplots(1, 2, figsize=(8, 4), dpi=120)
+        fig, axs = plt.subplots(1, 2, figsize=(8, 4), dpi=120, constrained_layout = True)
         fig.suptitle("")
         axs[0].set_title("Removed first max")
+        axs[0].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[0].set_xlabel("RA [DEG]")
+        axs[0].set_ylabel("Dec [DEG]")
+        axs[0].ticklabel_format(style='plain',useOffset=False)
+        axs[0].invert_xaxis()
         axs[0].pcolormesh(ras, decs, result)
         axs[1].set_title("Actual")
+        axs[1].xaxis.set_major_locator(MaxNLocator(nbins=4))
+        axs[1].set_xlabel("RA [DEG]")
+        axs[1].set_ylabel("Dec [DEG]")
+        axs[1].ticklabel_format(style='plain',useOffset=False)
+        axs[1].invert_xaxis()
         axs[1].pcolormesh(ras, decs, intensities)
         plt.show()
 
@@ -499,11 +637,21 @@ def RemoveFirstMax2(observations, R_0 = 6*12/(360*60*60), debug=False):
         result = np.select([range_1, range_2], [val_1, val_2])
         #om du vill se figurer (Kopia av moffat)
         if debug:
-            fig, axs = plt.subplots(1, 2, figsize=(8, 4), dpi=120)
+            fig, axs = plt.subplots(1, 2, figsize=(8, 4), dpi=120, constrained_layout = True)
             fig.suptitle("")
             axs[0].set_title("Removed first max")
+            axs[0].xaxis.set_major_locator(MaxNLocator(nbins=4))
+            axs[0].set_xlabel("RA [DEG]")
+            axs[0].set_ylabel("Dec [DEG]")
+            axs[0].ticklabel_format(style='plain',useOffset=False)
+            axs[0].invert_xaxis()
             axs[0].pcolormesh(observation[2], observation[3], result)
             axs[1].set_title("Actual")
+            axs[1].xaxis.set_major_locator(MaxNLocator(nbins=4))
+            axs[1].set_xlabel("RA [DEG]")
+            axs[1].set_ylabel("Dec [DEG]")
+            axs[1].ticklabel_format(style='plain',useOffset=False)
+            axs[1].invert_xaxis()
             axs[1].pcolormesh(observation[2], observation[3], observation[4])
             plt.show()
         # Skapa nu observation med Mira A borttagen, result istället för intensities

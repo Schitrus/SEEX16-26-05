@@ -106,4 +106,5 @@ def parseFits(fits_dir, user_files = None, banlist=False):
                 observations.append((band, date, ras, decs, intensities, user_radecs))
             else:
                 observations.append((band, date, ras, decs, intensities))
+        
     return observations
