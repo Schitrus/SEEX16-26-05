@@ -139,7 +139,7 @@ def gaussIntensitet(ras, decs, intensities, debug=False):
 
 #Hittar ras och dec för ett intensitetsintervall
 def hittaIntensitet(ras, decs, intensities, lowLim, upLim):
-
+    
     #skaffa maxintensitet
     ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities, debug=False)
 
@@ -159,10 +159,10 @@ def hittaIntensitet(ras, decs, intensities, lowLim, upLim):
     return delint, delras, deldec
 
 # Hitta centrum med halva max
-# R_Dor 0.6-1
-# R_Leo 0.6-
+# R_Dor 0.8-1
+# R_Leo 0.7-0.8
 # W_Hya 0.5-0.7
-def halfMax(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
+def halfMax(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
     delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
@@ -202,10 +202,10 @@ def halfMax(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
 
 
 # Hitta centrum med halva max viktad med intensiteter
-#R_Dor 0.6-1
-#R_Leo 0.6-0.8
+#R_Dor 0.8-1
+#R_Leo 0.7-1
 #W_Hya 0.5-0.7
-def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=0.8, debug=False):
+def halfViktad(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
     delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
@@ -249,8 +249,8 @@ def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=0.8, debug=False):
 
 
 # Hitta centrum med halva max LSQ, 
-#R_Dor bäst vid 0.4-0.6
-#R_Leo bäst vid 0.7-0.8
+#R_Dor bäst vid 0.8-1
+#R_Leo bäst vid 0.7-1
 #W Hya bäst vid 0.5-0.7
 def halfLSQ(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
     #skaffa maxintensitet
@@ -271,6 +271,7 @@ def halfLSQ(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
     x_1=sci.optimize.minimize(square,x_0)
     
     meanint=np.average(delint)
+    
     lsqRas=x_1.get("x")[0]
     lsqDec=x_1.get("x")[1]
 
@@ -278,6 +279,7 @@ def halfLSQ(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
     sigma_fit_dec = np.std(deldec, ddof = 1)/np.sqrt(len(deldec))
     sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
     sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2)
+
     # Om man vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 2, figsize=(12, 5), dpi=120, constrained_layout = True)
