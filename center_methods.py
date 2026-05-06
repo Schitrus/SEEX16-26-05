@@ -14,6 +14,10 @@ from matplotlib.ticker import MaxNLocator
 
 # Få centerpunkter med metod och observationer
 # Ger tillbaka tidpunkter, ra:s och dec:s
+
+# Assumed minimal uncertainty of 1 mas
+sigma_sys = 6 / 3.6e6
+
 def getCenters(method, observations, lowLim=0.6, upLim=1, debug=False, halva=False, user=None):
     ts = []
     ras = []
@@ -96,9 +100,11 @@ def gaussIntensitet(ras, decs, intensities, debug=False):
     sigma2 = np.sum(residuals**2) / (N - p)
     cov = gauss_fitter.fit_info['param_cov']
     cov = cov * sigma2
-    sigma_ra = np.sqrt(cov[1, 1])
-    sigma_dec = np.sqrt(cov[2, 2]) 
-
+    sigma_fit_ra = np.sqrt(cov[1,1])
+    sigma_fit_dec = np.sqrt(cov[2,2])
+    sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
+    sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2)
+    print(sigma_ra)
     # För debug så plottas den initiala gauss modellen, den gaussiska anpassningen och ursprungliga stjärnbilden bredvid varandra.
     if debug:
         fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=120, constrained_layout = True)
@@ -166,9 +172,10 @@ def halfMax(ras, decs, intensities, lowLim=0.6, upLim=1, debug=False):
     meanint=np.mean(delint)
 
     # Extrahera osäkerheter
-    sigma_ra = np.std(delras, ddof = 1)/np.sqrt(len(delras))
-    sigma_dec = np.std(deldec, ddof = 1)/np.sqrt(len(deldec))
-
+    sigma_fit_ra = np.std(delras, ddof = 1)/np.sqrt(len(delras))
+    sigma_fit_dec = np.std(deldec, ddof = 1)/np.sqrt(len(deldec))
+    sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
+    sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2)
     # Om man vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 2, figsize=(12, 5), dpi=120, constrained_layout = True)
@@ -211,8 +218,10 @@ def halfViktad(ras, decs, intensities, lowLim=0.6, upLim=0.8, debug=False):
     w = np.array(delint)
     w_sum = np.sum(w)
 
-    sigma_ra = np.sqrt(np.sum(w * (delras - meanRas)**2)) / w_sum
-    sigma_dec = np.sqrt(np.sum(w * (deldec - meanDec)**2)) / w_sum
+    sigma_fit_ra = np.sqrt(np.sum(w * (delras - meanRas)**2)) / w_sum
+    sigma_fit_dec = np.sqrt(np.sum(w * (deldec - meanDec)**2)) / w_sum
+    sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
+    sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2)
     # Om man vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 2, figsize=(12, 5), dpi=120, constrained_layout = True)
@@ -265,8 +274,10 @@ def halfLSQ(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
     lsqRas=x_1.get("x")[0]
     lsqDec=x_1.get("x")[1]
 
-    sigma_ra = np.std(delras, ddof = 1)/np.sqrt(len(delras))
-    sigma_dec = np.std(deldec, ddof = 1)/np.sqrt(len(deldec))
+    sigma_fit_ra = np.std(delras, ddof = 1)/np.sqrt(len(delras))
+    sigma_fit_dec = np.std(deldec, ddof = 1)/np.sqrt(len(deldec))
+    sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
+    sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2)
     # Om man vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 2, figsize=(12, 5), dpi=120, constrained_layout = True)
@@ -316,8 +327,10 @@ def moffat(ras, decs, intensities, debug=False):
     sigma2 = np.sum(residuals**2) / (N - p)
     cov = moffat_fitter.fit_info['param_cov']
     cov = cov * sigma2
-    sigma_ra = np.sqrt(cov[1, 1])
-    sigma_dec = np.sqrt(cov[2, 2])  
+    sigma_fit_ra = np.sqrt(cov[1, 1])
+    sigma_fit_dec = np.sqrt(cov[2, 2])
+    sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
+    sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2)
     #om du vill se figurer
     if debug:
         fig, axs = plt.subplots(1, 3, figsize=(12, 4), dpi=120, constrained_layout = True)
@@ -412,9 +425,10 @@ def Lorentz(ras, decs, intensities, debug=False):
     sigma2 = np.sum(residuals**2) / (N - p)
     cov = Lorentz_fitter.fit_info['param_cov']
     cov = cov * sigma2
-    sigma_ra = np.sqrt(cov[1, 1])
-    sigma_dec = np.sqrt(cov[2, 2])  
-
+    sigma_fit_ra = np.sqrt(cov[1, 1])
+    sigma_fit_dec = np.sqrt(cov[2, 2])  
+    sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
+    sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2)
     #om du vill se figurer (Kopia av moffat)
     if debug:
         fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120, constrained_layout = True)
@@ -477,9 +491,10 @@ def RickerWavelet(ras, decs, intensities, debug=False):
     sigma2 = np.sum(residuals**2) / (N - p)
     cov = RickerWavelet_fitter.fit_info['param_cov']
     cov = cov * sigma2
-    sigma_ra = np.sqrt(cov[1, 1])
-    sigma_dec = np.sqrt(cov[2, 2])  
-
+    sigma_fit_ra = np.sqrt(cov[1, 1])
+    sigma_fit_dec = np.sqrt(cov[2, 2])  
+    sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
+    sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2)
     #om du vill se figurer (Kopia av moffat)
     if debug:
         fig, axs = plt.subplots(1, 4, figsize=(16, 4), dpi=120, constrained_layout = True)
@@ -542,8 +557,10 @@ def TrapezoidDisk(ras, decs, intensities, debug=False):
     sigma2 = np.sum(residuals**2) / (N - p)
     cov = TrapezoidDisk_fitter.fit_info['param_cov']
     cov = cov * sigma2
-    sigma_ra = np.sqrt(cov[1, 1])
-    sigma_dec = np.sqrt(cov[2, 2])  
+    sigma_fit_ra = np.sqrt(cov[1, 1])
+    sigma_fit_dec = np.sqrt(cov[2, 2]) 
+    sigma_ra = np.sqrt(sigma_sys**2 + sigma_fit_ra**2)
+    sigma_dec = np.sqrt(sigma_sys**2 + sigma_fit_dec**2) 
 
     #om du vill se figurer (Kopia av moffat)
     if debug:

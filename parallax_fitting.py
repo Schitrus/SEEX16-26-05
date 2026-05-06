@@ -9,7 +9,7 @@ from astropy.coordinates import solar_system_ephemeris
 import matplotlib.gridspec as gridspec
 
 
-solar_system_ephemeris.set("jpl")
+solar_system_ephemeris.set("DE440")
 
 # For calibration stars
 def read_calibration_star(file):
@@ -68,7 +68,11 @@ def residuals(params, t, ref_t, ras, decs, ras_err, decs_err):
     
     ra_model, dec_model = model(t, ref_t, *params)
     dec0 = params[1]
-    residual_ra = (ras - ra_model) * np.cos(decs) / (ras_err)
+    dra = np.arctan2(
+    np.sin(ras - ra_model),
+    np.cos(ras - ra_model)
+)
+    residual_ra = dra / ras_err
     residual_dec = (decs - dec_model) / decs_err
 
     return np.concatenate([residual_ra, residual_dec])
@@ -78,6 +82,17 @@ def fit_model(t, ref_t, ras, decs, initial, bounds, ras_err, decs_err):
 
     result = sci.optimize.least_squares(residuals, initial,  args = (t, ref_t, ras, decs, ras_err, decs_err), max_nfev=5000, bounds = bounds)
 
+    ndata = 2 * len(ras)
+    nparams = len(result.x)
+
+    # Chi-square
+    chi2 = 2 * result.cost
+
+    # Reduced chi-square
+    chi2_red = chi2 / (ndata - nparams)
+
+    #print(f"Chi^2       = {chi2:.3f}")
+    print(f"Reduced X^2 = {chi2_red:.3f}")
     return result
 
 # Function for plotting
