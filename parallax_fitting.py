@@ -91,7 +91,6 @@ def fit_model(t, ref_t, ras, decs, initial, bounds, ras_err, decs_err):
     # Reduced chi-square
     chi2_red = chi2 / (ndata - nparams)
 
-    #print(f"Chi^2       = {chi2:.3f}")
     print(f"Reduced X^2 = {chi2_red:.3f}")
     return result
 
@@ -120,7 +119,7 @@ def makeplots(name, result, t, ref_t, ras, decs, ras_err, decs_err, save = False
     dec0 = np.deg2rad(dec0/3.6e6)
 
     fig = plt.figure(figsize=(15, 10), dpi=120)
-    plt.suptitle(name)
+    #plt.suptitle(name)
 
     # Outer grid: 2 blocks (top + bottom)
     outer = gridspec.GridSpec(2, 1, height_ratios=[2, 2], hspace=0.4)
@@ -143,41 +142,46 @@ def makeplots(name, result, t, ref_t, ras, decs, ras_err, decs_err, save = False
     # --- PLOTTING ---
 
     # With proper motion
-    ax00.set_title('With proper motion')
+    ax00.set_title('Dek och RA med egenrörelse')
     ax00.plot(hypothetical_extended, 3.6e6*np.rad2deg(dec_mod-dec0), color = 'cornflowerblue')
     ax00.errorbar(t, 3.6e6*np.rad2deg(decs-dec0), yerr=decs_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.75)
+    ax00.scatter(t, 3.6e6*np.rad2deg(decs-dec0), color='crimson', s=3, zorder = 5)
     ax00.set_ylabel(r'$\Delta\delta$ [mas]')
     ax00.tick_params(labelbottom=False)
 
     ax10.plot(hypothetical_extended, 3.6e6*np.rad2deg(ra_mod-ra0), color = 'cornflowerblue')
     ax10.errorbar(t, 3.6e6*np.rad2deg(ras-ra0), yerr=ras_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.75)
+    ax10.scatter(t, 3.6e6*np.rad2deg(ras-ra0), color='crimson', s=3, zorder = 5)
     ax10.set_ylabel(r'$\Delta\alpha$ [mas]')
     ax10.set_xlabel(r'$\Delta t$ [years]')
 
     # Without proper motion
-    ax01.set_title('Without proper motion')
+    ax01.set_title('Dek och RA utan egenrörelse')
     ax01.plot(hypothetical_extended, 3.6e6*np.rad2deg(dec_mod_wopm-dec0), color = 'cornflowerblue')
     ax01.errorbar(t, 3.6e6*np.rad2deg(dec_wopm-dec0), yerr=decs_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.75)
+    ax01.scatter(t, 3.6e6*np.rad2deg(dec_wopm-dec0), color='crimson', s=3, zorder = 5)
     ax01.set_ylabel(r'$\Delta\delta$ [mas]')
     ax01.tick_params(labelbottom=False)
 
     ax11.plot(hypothetical_extended, 3.6e6*np.rad2deg(ra_mod_wopm-ra0), color = 'cornflowerblue')
     ax11.errorbar(t, 3.6e6*np.rad2deg(ra_wopm-ra0), yerr=ras_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.75)
+    ax11.scatter(t, 3.6e6*np.rad2deg(ra_wopm-ra0), color='crimson', s=3, zorder = 5)
     ax11.set_ylabel(r'$\Delta\alpha$ [mas]')
     ax11.set_xlabel(r'$\Delta t$ [years]')
 
     # Sky plots (separate spacing!)
     ax20.plot(3.6e6*np.rad2deg(ra_mod_long-ra0), 3.6e6*np.rad2deg(dec_mod_long-dec0), color = 'cornflowerblue')
-    ax20.errorbar(3.6e6*np.rad2deg(ras-ra0), 3.6e6*np.rad2deg(decs-dec0), xerr=ras_err, yerr=decs_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.75)
+    ax20.errorbar(3.6e6*np.rad2deg(ras-ra0), 3.6e6*np.rad2deg(decs-dec0), xerr=ras_err, yerr=decs_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.4)
+    ax20.scatter(3.6e6*np.rad2deg(ras-ra0), 3.6e6*np.rad2deg(decs-dec0), color='crimson', s=3, zorder = 5)
     ax20.axis('equal')
     ax20.invert_xaxis()
-    ax20.set_title('Dec vs RA with proper motion')
+    ax20.set_title('Dek mot RA med egenrörelse')
     ax20.set_xlabel(r'$\Delta\alpha$ [mas]')
     ax20.set_ylabel(r'$\Delta\delta$ [mas]')
 
-    ax21.plot(3.6e6*np.rad2deg(ra_mod_wopm-ra0), 3.6e6*np.rad2deg(dec_mod_wopm-dec0), color = 'cornflowerblue', linestyle=':')
-    ax21.errorbar(3.6e6*np.rad2deg(ra_wopm-ra0), 3.6e6*np.rad2deg(dec_wopm-dec0), xerr=ras_err, yerr=decs_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.75)
-    
+    ax21.plot(3.6e6*np.rad2deg(ra_mod_wopm-ra0), 3.6e6*np.rad2deg(dec_mod_wopm-dec0), color = 'cornflowerblue', label = 'Modell', linewidth=0.5)
+    ax21.errorbar(3.6e6*np.rad2deg(ra_wopm-ra0), 3.6e6*np.rad2deg(dec_wopm-dec0), xerr=ras_err, yerr=decs_err, color='crimson', fmt='o', ms=3, ecolor='black', alpha=0.4)
+    ax21.scatter(3.6e6*np.rad2deg(ra_wopm-ra0), 3.6e6*np.rad2deg(dec_wopm-dec0), color='crimson', s=3, label = 'Observationer', zorder = 5)
     if datum:
         # Ta reda på avståden till modellen
         x1=3.6e6*np.rad2deg([dec_wopm-(dec_mod_elips)])
@@ -209,9 +213,10 @@ def makeplots(name, result, t, ref_t, ras, decs, ras_err, decs_err, save = False
                             f.write(f"{tid}\n")
         ax21.plot(3.6e6*np.rad2deg([ra_wopm[i]-ra0, ra_mod_elips[i]-ra0]), 3.6e6*np.rad2deg([dec_wopm[i]-dec0, dec_mod_elips[i]-dec0]), color = 'crimson', alpha=0.25)
     ax21.axis('equal')
-    ax21.set_title('Dec vs RA without proper motion')
+    ax21.set_title('Dek mot RA utan egenrörelse')
     ax21.set_xlabel(r'$\Delta\alpha$ [mas]')
     ax21.set_ylabel(r'$\Delta\delta$ [mas]')
+    ax21.legend(loc='upper right')
     if save == False:
         plt.show()
     elif save == True:
