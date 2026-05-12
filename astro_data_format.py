@@ -27,9 +27,9 @@ def fromAstroData(fname):
     name = first_line.split("=", 1)[1].strip()
     formatter = {0: lambda ts: aspy.time.Time(float(ts), format='decimalyear'), 
                  1: lambda ras: aspy.coordinates.Angle(ras, unit=aspy.units.deg).degree,
-                 2: lambda ra_errors: aspy.coordinates.Angle(ra_errors).degree,
+                 2: lambda ra_errors: aspy.coordinates.Angle(ra_errors, unit=aspy.units.deg).degree,
                  3: lambda decs: aspy.coordinates.Angle(decs, unit=aspy.units.deg).degree,
-                 4: lambda dec_errors: aspy.coordinates.Angle(dec_errors).degree}
+                 4: lambda dec_errors: aspy.coordinates.Angle(dec_errors, unit=aspy.units.deg).degree}
     data = np.loadtxt(fname=fname, skiprows= 3, unpack=True, converters=formatter,encoding='latin1', 
                                                      dtype=[("time", aspy.time.Time), ("ras",float), ("ra_errs", float), ("decs", float), ("dec_errs", float)])
     ts, ras, ra_errors, decs, dec_errors = data

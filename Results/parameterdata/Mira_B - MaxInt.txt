@@ -1,0 +1,16 @@
+
+Bootstrap results:
+ra0: \num{125412393.398} $\pm$ \num{0.986} mas (68% CI: [125412392.375, 125412394.421])
+dec0: \num{-10723794.242} $\pm$ \num{0.773} mas (68% CI: [-10723795.043, -10723793.440])
+parallax: \num{5.869} $\pm$ \num{1.412} mas (68% CI: [4.404, 7.334])
+pm_ra: \num{-0.665} $\pm$ \num{0.258} mas (68% CI: [-0.933, -0.398])
+pm_dec: \num{-231.134} $\pm$ \num{0.193} mas (68% CI: [-231.334, -230.934])
+Distance: \num{171.257} $^{+\num{55.808}}_{-\num{34.900}}$ parsec
+
+Best fit results:
+ra0: 125412393.411 ± 0.778 mas
+dec0: -10723794.239 ± 0.637 mas
+parallax: 5.853 ± 1.283 mas
+pm_ra: -0.665 ± 0.175 mas
+pm_dec: -231.134 ± 0.156 mas
+Distance: 170.859 ± 37.443 parsec
