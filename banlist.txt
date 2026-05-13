@@ -6,4 +6,5 @@ WHya_B7_2025_08_05.fits
 Mira_ab_B7_2023-07-06.fits
 Mira_ab_B9_2023-06-26.fits
 Mira_ab_B9_2023-06-30.fits
+#Mira_ab_B7_2023-07-21.fits  behövdes ta bort för trapezoid, redig uteliggare
 WHya hade inga riktigt dåliga så den här kan man nästan låta var kvar.

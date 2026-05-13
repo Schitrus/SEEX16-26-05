@@ -159,10 +159,10 @@ def hittaIntensitet(ras, decs, intensities, lowLim, upLim):
     return delint, delras, deldec
 
 # Hitta centrum med halva max
-# R_Dor 0.8-1
-# R_Leo 0.7-0.8
-# W_Hya 0.5-0.7
-def halfMax(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
+# R_Dor 0.8-1   nya 0.7-1
+# R_Leo 0.7-0.8  nya 0.5-0.7
+# W_Hya 0.5-0.7      nya 0.3-0.5
+def halfMax(ras, decs, intensities, lowLim=0.7, upLim=1, debug=False):
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
     delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
@@ -202,10 +202,10 @@ def halfMax(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
 
 
 # Hitta centrum med halva max viktad med intensiteter
-#R_Dor 0.8-1
-#R_Leo 0.7-1
-#W_Hya 0.5-0.7
-def halfViktad(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
+#R_Dor 0.8-1      nya 0.7-1
+#R_Leo 0.7-1      0.5-0.7        
+#W_Hya 0.5-0.7         0.3-0.5
+def halfViktad(ras, decs, intensities, lowLim=0.7, upLim=1, debug=False):
     #skaffa ras och dec för intensiteter i ett godtyckligt intervall mellan 0 och 1.
     delint, delras, deldec=hittaIntensitet(ras, decs, intensities, lowLim, upLim)
 
@@ -249,10 +249,10 @@ def halfViktad(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
 
 
 # Hitta centrum med halva max LSQ, 
-#R_Dor bäst vid 0.8-1
-#R_Leo bäst vid 0.7-1
-#W Hya bäst vid 0.5-0.7
-def halfLSQ(ras, decs, intensities, lowLim=0.5, upLim=0.7, debug=False):
+#R_Dor bäst vid 0.8-1  nya 0.7-1
+#R_Leo bäst vid 0.7-1    nya 0.5-0.7
+#W Hya bäst vid 0.5-0.7  nya 0.3-0.5
+def halfLSQ(ras, decs, intensities, lowLim=0.7, upLim=1, debug=False):
     #skaffa maxintensitet
     ra_max, dec_max, int_max, _, _ = maxIntensitet(ras, decs, intensities, debug=False)
 
